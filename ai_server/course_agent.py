@@ -161,12 +161,19 @@ def generate_course_section(
 
     _notify("Generating course content with the local model…")
 
-    response = ollama.chat(
+    # 1-hour timeout — generous for CPU-based generation, but still bounded.
+    # num_predict=32768 and num_ctx=32768 to match ollama_client.py settings.
+    client = ollama.Client(timeout=3600.0)
+    response = client.chat(
         model=model,
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
+        options={
+            "num_predict": 32768,
+            "num_ctx": 32768,
+        },
     )
     return response["message"]["content"]
 
