@@ -1,3 +1,4 @@
+# Configuration settings for AI server
 import os
 
 # Ollama settings
