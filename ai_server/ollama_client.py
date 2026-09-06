@@ -24,7 +24,9 @@ async def generate_streaming(
     Returns the complete accumulated response string when done.
 
     Raises httpx.HTTPError on network or server errors.
-    Timeout = 10 minutes (Gemma4 can be slow on CPU).
+    Timeout = 1 hour — generous for large course generation on CPU.
+    num_predict = 32768 — large output cap; well beyond typical course length.
+    num_ctx = 32768 — large context window so big prompts aren't truncated.
     """
     url = f"{OLLAMA_HOST}/api/generate"
     payload = {
@@ -33,13 +35,15 @@ async def generate_streaming(
         "stream": True,
         "options": {
             "temperature": 0.4,
-            "num_predict": 8192,
+            "num_predict": 32768,   # large output cap (was 8192)
+            "num_ctx": 32768,       # large context window for big prompts
         },
     }
 
     full_response: list[str] = []
 
-    async with httpx.AsyncClient(timeout=600.0) as client:
+    # 1-hour timeout — generous for CPU-based generation, but still bounded
+    async with httpx.AsyncClient(timeout=3600.0) as client:
         async with client.stream("POST", url, json=payload) as response:
             response.raise_for_status()
             async for line in response.aiter_lines():
