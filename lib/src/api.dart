@@ -968,6 +968,41 @@ class MatrixApi {
     return jsonDecode(text);
   }
 
+  // ─── Admin: AI course image tokens ──────────────────────────────────────────
+
+  /// Upserts a row in course_image_tokens tracking which real image was
+  /// assigned to an AI-generated [img:id|...] placeholder.
+  Future<void> adminUpsertCourseImageToken({
+    required String id,
+    String? courseId,
+    String? moduleId,
+    String? shortTitle,
+    String? description,
+    String? imageUrl,
+  }) async {
+    _requireSession();
+    // Check if the row already exists
+    final existing = await _restGet('course_image_tokens', {
+      'select': 'id',
+      'id': 'eq.$id',
+      'limit': '1',
+    });
+    final body = <String, dynamic>{
+      'id': id,
+      'course_id': courseId,
+      'module_id': moduleId,
+      'short_title': shortTitle,
+      'description': description,
+      'image_url': imageUrl,
+    }..removeWhere((_, v) => v == null);
+    if (existing.isEmpty) {
+      await _restPost('course_image_tokens', body);
+    } else {
+      body.remove('id'); // don't patch primary key
+      await _restPatch('course_image_tokens', {'id': 'eq.$id'}, body);
+    }
+  }
+
   void _requireSession() {
     if (session == null) throw ApiException('Please sign in first.');
   }

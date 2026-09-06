@@ -7,6 +7,7 @@ import '../components/module_text_renderer.dart';
 import '../screens/upload_img_screen.dart';
 import 'admin_reindex_screen.dart';
 import 'banners_admin_screen.dart';
+import 'ai_course_create_screen.dart';
 
 // ─── Admin Screen ─────────────────────────────────────────────────────────────
 
@@ -74,6 +75,15 @@ class _AdminScreenState extends State<AdminScreen> {
                 Navigator.of(
                   context,
                 ).push(MaterialPageRoute(builder: (_) => const AdminReindexScreen()));
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.psychology_outlined),
+              tooltip: 'AI Generate Course',
+              onPressed: () {
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const AiCourseCreateScreen()));
               },
             ),
           ],

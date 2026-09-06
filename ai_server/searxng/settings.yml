@@ -1,0 +1,31 @@
+# SearXNG settings — minimal config enabling the JSON output format
+# which is required by the ai_server course_agent.py web search.
+
+use_default_settings: true
+
+server:
+  secret_key: "change-this-to-a-random-secret"
+  bind_address: "0.0.0.0"
+  port: 8080
+  base_url: "http://localhost:8080/"
+  limiter: false          # disable rate-limiter for local/private use
+
+search:
+  safe_search: 0
+  formats:
+    - html
+    - json               # MUST be enabled — course_agent uses the JSON API
+
+engines:
+  - name: google
+    engine: google
+    use_mobile_ui: false
+    disabled: false
+
+  - name: bing
+    engine: bing
+    disabled: false
+
+  - name: duckduckgo
+    engine: duckduckgo
+    disabled: false

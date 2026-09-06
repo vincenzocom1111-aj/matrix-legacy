@@ -4,9 +4,6 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../models/models.dart';
 import '../app.dart'; // For MatrixScope
 import '../widgets/shared_widgets.dart';
-import '../ai/gemini_embedding_api.dart';
-import '../ai/gemini_chat_api.dart';
-import '../widgets/ai_answer_renderer.dart';
 
 import "admin_screen.dart";
 // ─── Profile Screen ───────────────────────────────────────────────────────────
@@ -42,35 +39,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.fromLTRB(16, 56, 16, 24),
         children: [
           const BrandHeader(),
-          const AiAnswerRenderer(
-            content: '''
-# Integration Basics
-
-Integration is one of the two central operations in calculus.
-
-## Key Rules
-
-| Rule | Formula |
-|------|---------|
-| Power Rule | x^(n+1)/(n+1) |
-| Constant | k times integral |
-
-- First bullet point
-- Second bullet point with **bold** text
-
-1. Step one
-2. Step two
-
-> This is a quoted note.
-
-Inline math: \$x^2 + 1\$
-
-\$\$
-\\int x^2 dx = \\frac{x^3}{3} + C
-\$\$
-print("code block test")
-''',
-          ),
           const SizedBox(height: 24),
           Text(
             'Your account',
@@ -132,58 +100,6 @@ print("code block test")
                     },
                     icon: const Icon(Icons.logout),
                     label: const Text('Sign out'),
-                  ),
-
-                  const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: () async {
-                      const testCourseId =
-                          '456dc0bd-1933-475b-b7e0-8fc22dc81477';
-                      final embeddingApi = GeminiEmbeddingApi();
-                      final matrixApi = scope.api;
-
-                      try {
-                        final questions = [
-                          'What is integration?', // same as cached question
-                          'Explain integration to me', // rephrased, should be "similar"
-                          'Give me integration examples', // related but different angle
-                          'What is photosynthesis?', // unrelated
-                          'What is the capital of France?', // totally unrelated
-                        ];
-
-                        for (final q in questions) {
-                          final embedding = await embeddingApi.embed(q);
-                          final rows = await matrixApi.callMatchAiCache(
-                            courseId: testCourseId,
-                            embedding: embedding,
-                            threshold:
-                                0.0, // no filtering — show the real number
-                            count: 1,
-                          );
-                          final sim = rows.isEmpty
-                              ? null
-                              : rows.first['similarity'];
-                          debugPrint('[AI-DEBUG] "$q" → similarity: $sim');
-                        }
-                      } catch (e) {
-                        debugPrint('[AI-DEBUG] Error: $e');
-                      }
-                    },
-                    child: const Text('[DEBUG] Calibrate thresholds'),
-                  ),
-                  const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: () async {
-                      final reply = await GeminiChatApi().sendMessage(
-                        courseTitle: 'Mathematics',
-                        courseContext: 'Integration is the area under a curve...',
-                        history: [],
-                        question: 'Show me a diagram of the area under a curve',
-                        availableMedia: {'integration_areaunderthecurve': 'area under the curve , integration'},
-                      );
-                      debugPrint('[AI-DEBUG] $reply');
-                    },
-                    child: const Text('[DEBUG] Test B6'),
                   ),
                 ],
               ),
