@@ -13,7 +13,7 @@ from typing import Optional
 class Job:
     job_id: str
     status: str = "pending"           # pending | processing | done | failed
-    stage: str = "extracting"         # extracting | analyzing | generating | done | failed
+    stage: str = "extracting"         # extracting | analyzing | generating | evaluating | refining | done | failed
     stage_message: str = ""           # Human-readable real-time progress message
     extracted_text: str = ""          # The extracted source text shown during analysis
     partial_text: str = ""            # accumulated tokens so far (live preview)
@@ -21,6 +21,9 @@ class Job:
     error_message: Optional[str] = None
     tokens_generated: int = 0         # token count, shown in progress UI
     elapsed_seconds: int = 0          # live elapsed duration
+    efficiency_score: Optional[int] = None # percentage (0-100)
+    evaluation_feedback: Optional[str] = None # feedback notes on assumptions, missing content, fixes
+    iteration: int = 1                # current attempt number (1, 2, 3...)
 
 
 _store: dict[str, Job] = {}
