@@ -63,7 +63,11 @@ class _AiCourseCreateScreenState extends State<AiCourseCreateScreen> {
   String _statusText = '';
   String _partialText = ''; // live tokens from Gemma
   int _tokensGenerated = 0;
-  String _stage = ''; // 'uploading' | 'extracting' | 'generating'
+  String _stage = ''; // 'uploading' | 'extracting' | 'generating' | 'evaluating' | 'refining'
+  int? _efficiencyScore;
+  // ignore: unused_field
+  String? _evaluationFeedback;
+  int _iteration = 1;
   Timer? _pollTimer;
   String? _activeJobId;
   final ScrollController _liveScrollCtrl = ScrollController();
@@ -267,6 +271,9 @@ class _AiCourseCreateScreenState extends State<AiCourseCreateScreen> {
           // Update live preview
           setState(() {
             _tokensGenerated = job.tokensGenerated;
+            _efficiencyScore = job.efficiencyScore;
+            _evaluationFeedback = job.evaluationFeedback;
+            _iteration = job.iteration;
             if (job.stage.isNotEmpty) {
               _stage = job.stage;
             }
@@ -312,6 +319,7 @@ class _AiCourseCreateScreenState extends State<AiCourseCreateScreen> {
           targetCourse: _selectedCourse,
           targetModule: _selectedModule,
           mode: _mode,
+          efficiencyScore: job.efficiencyScore,
         ),
       ),
     );
@@ -430,27 +438,77 @@ class _AiCourseCreateScreenState extends State<AiCourseCreateScreen> {
                   ],
                 ),
               ),
+              if (_efficiencyScore != null) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _efficiencyScore! >= 90
+                        ? const Color(0xff18664b).withValues(alpha: 0.15)
+                        : Colors.orange.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: _efficiencyScore! >= 90
+                          ? const Color(0xff18664b)
+                          : Colors.orange,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _efficiencyScore! >= 90 ? Icons.verified : Icons.speed,
+                        size: 14,
+                        color: _efficiencyScore! >= 90
+                            ? const Color(0xff18664b)
+                            : Colors.orange.shade800,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Score: $_efficiencyScore%',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: _efficiencyScore! >= 90
+                              ? const Color(0xff18664b)
+                              : Colors.orange.shade900,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
               // Stage chips
               _StageChip(
                 label: 'Extract',
                 active:
                     _stage == 'extracting' ||
                     _stage == 'analyzing' ||
-                    _stage == 'generating',
+                    _stage == 'generating' ||
+                    _stage == 'evaluating' ||
+                    _stage == 'refining',
                 pulsing: _stage == 'extracting',
               ),
-              const SizedBox(width: 6),
-              _StageChip(
-                label: 'Analyze',
-                active: _stage == 'analyzing' || _stage == 'generating',
-                pulsing: _stage == 'analyzing',
-              ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 5),
               _StageChip(
                 label: 'Generate',
-                active: _stage == 'generating',
+                active: _stage == 'generating' || _stage == 'evaluating' || _stage == 'refining',
                 pulsing: _stage == 'generating',
               ),
+              const SizedBox(width: 5),
+              _StageChip(
+                label: 'Audit',
+                active: _stage == 'evaluating' || _stage == 'refining',
+                pulsing: _stage == 'evaluating',
+              ),
+              if (_stage == 'refining' || _iteration > 1) ...[
+                const SizedBox(width: 5),
+                _StageChip(
+                  label: 'Refine (#$_iteration)',
+                  active: _stage == 'refining',
+                  pulsing: _stage == 'refining',
+                ),
+              ],
             ],
           ),
         ),

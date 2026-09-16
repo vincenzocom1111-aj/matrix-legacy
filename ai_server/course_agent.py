@@ -93,7 +93,8 @@ def generate_course_section(
     num_sources: int = 3,
     model: str = OLLAMA_MODEL,
     on_status: callable = None,
-) -> str:
+    return_source: bool = False,
+) -> str | tuple[str, str]:
     """
     Searches the web for the topic (via SearXNG), pulls in real sources, and
     asks the model to write a course section grounded in that material.
@@ -102,10 +103,11 @@ def generate_course_section(
     using the model's own knowledge. The caller is notified via on_status().
 
     Args:
-        topic:       Course topic to generate content for.
-        num_sources: Max web results to fetch.
-        model:       Ollama model tag.
-        on_status:   Optional callable(message: str) for progress/warning updates.
+        topic:         Course topic to generate content for.
+        num_sources:   Max web results to fetch.
+        model:         Ollama model tag.
+        on_status:     Optional callable(message: str) for progress/warning updates.
+        return_source: If True, returns (content, context_block).
     """
 
     def _notify(msg: str):
@@ -131,6 +133,7 @@ def generate_course_section(
                 f"SOURCE: {r['title']} ({r['url']})\n{page_text or r['snippet']}"
             )
 
+    context_block = ""
     # 3. Build prompt — adapts based on whether we have web context
     if sources_text:
         context_block = "\n\n---\n\n".join(sources_text)
@@ -175,7 +178,10 @@ def generate_course_section(
             "num_ctx": 32768,
         },
     )
-    return response["message"]["content"]
+    content = response["message"]["content"]
+    if return_source:
+        return content, context_block
+    return content
 
 
 # ---------- QUICK LOCAL TEST ----------

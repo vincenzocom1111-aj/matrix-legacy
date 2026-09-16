@@ -20,12 +20,14 @@ class AiCourseReviewScreen extends StatefulWidget {
     required this.mode,
     this.targetCourse,
     this.targetModule,
+    this.efficiencyScore,
   });
 
   final String generatedText;
   final String mode; // 'create' | 'enhance'
   final Course? targetCourse;
   final TextModule? targetModule;
+  final int? efficiencyScore;
 
   @override
   State<AiCourseReviewScreen> createState() => _AiCourseReviewScreenState();
@@ -194,6 +196,70 @@ class _AiCourseReviewScreenState extends State<AiCourseReviewScreen> {
       ),
       body: CustomScrollView(
         slivers: [
+          // ── Quality / Efficiency Score Banner ──────────────────────────────
+          if (widget.efficiencyScore != null)
+            SliverToBoxAdapter(
+              child: Container(
+                margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: widget.efficiencyScore! >= 90
+                      ? const Color(0xff18664b).withValues(alpha: 0.1)
+                      : Colors.orange.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: widget.efficiencyScore! >= 90
+                        ? const Color(0xff18664b).withValues(alpha: 0.4)
+                        : Colors.orange.shade400,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      widget.efficiencyScore! >= 90
+                          ? Icons.verified_outlined
+                          : Icons.warning_amber_rounded,
+                      color: widget.efficiencyScore! >= 90
+                          ? const Color(0xff18664b)
+                          : Colors.orange.shade800,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.efficiencyScore! >= 90
+                                ? 'Verified Quality: ${widget.efficiencyScore}%'
+                                : 'Best-Effort Generation: ${widget.efficiencyScore}%',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: widget.efficiencyScore! >= 90
+                                  ? const Color(0xff18664b)
+                                  : Colors.orange.shade900,
+                            ),
+                          ),
+                          Text(
+                            widget.efficiencyScore! >= 90
+                                ? 'Content passed quality audit with no critical assumptions or missing topics.'
+                                : 'Generated with minor gaps or assumptions after refinement attempts.',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: widget.efficiencyScore! >= 90
+                                  ? const Color(0xff18664b).withValues(alpha: 0.8)
+                                  : Colors.orange.shade900.withValues(alpha: 0.8),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
           // ── Save target picker (if not pre-set) ────────────────────────────
           if (_saveModule == null)
             SliverToBoxAdapter(child: _buildTargetPicker()),
