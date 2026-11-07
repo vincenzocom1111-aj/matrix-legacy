@@ -1,0 +1,26 @@
+--- lib/src/screens/admin_screen.dart	2026-11-07 10:05:47.148390971 +0000
++++ /home/claude/p1/files/lib/src/screens/admin_screen.dart	2026-11-07 10:24:47.732920387 +0000
+@@ -7,7 +7,6 @@
+ import '../screens/upload_img_screen.dart';
+ import 'admin_reindex_screen.dart';
+ import 'banners_admin_screen.dart';
+-import 'ai_course_create_screen.dart';
+ 
+ // ─── Admin Screen ─────────────────────────────────────────────────────────────
+ 
+@@ -77,15 +76,6 @@
+                 ).push(MaterialPageRoute(builder: (_) => const AdminReindexScreen()));
+               },
+             ),
+-            IconButton(
+-              icon: const Icon(Icons.psychology_outlined),
+-              tooltip: 'AI Generate Course',
+-              onPressed: () {
+-                Navigator.of(
+-                  context,
+-                ).push(MaterialPageRoute(builder: (_) => const AiCourseCreateScreen()));
+-              },
+-            ),
+           ],
+         ),
+         const SizedBox(height: 24),
