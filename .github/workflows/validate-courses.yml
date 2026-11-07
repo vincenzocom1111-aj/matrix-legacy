@@ -1,0 +1,85 @@
+name: Validate course modules (PR check)
+
+on:
+  pull_request:
+    paths:
+      - 'courses/**/*.md'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history, so we can diff the PR)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Work out which .md files this PR touches
+        id: changed
+        run: |
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          FILES=$(git diff --name-only "$BASE" "$HEAD" -- 'courses/**/*.md')
+          echo "files<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$FILES" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Dry-run validate against Supabase
+        id: dryrun
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CHANGED_FILES: ${{ steps.changed.outputs.files }}
+        run: |
+          set +e
+          node scripts/sync-course-modules.js --dry-run > dryrun-output.txt 2>&1
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+          cat dryrun-output.txt
+
+      - name: Comment the dry-run report on the PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const output = fs.readFileSync('dryrun-output.txt', 'utf8');
+            const passed = '${{ steps.dryrun.outputs.exit_code }}' === '0';
+            const marker = '<!-- course-sync-dry-run -->';
+            const body = `${marker}\n### Course sync dry run — ${passed ? 'would sync cleanly ✅' : 'found problems ❌'}\n\n\`\`\`\n${output}\n\`\`\``;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find((c) => c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: Fail the check if validation found problems
+        if: steps.dryrun.outputs.exit_code != '0'
+        run: |
+          echo "Validation failed — see the PR comment or the log above for details."
+          exit 1

@@ -1,0 +1,44 @@
+name: Sync course modules to Supabase
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'courses/**/*.md'
+  workflow_dispatch: {}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history, so we can diff the push)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Work out which .md files this push touched
+        id: changed
+        run: |
+          BEFORE="${{ github.event.before }}"
+          AFTER="${{ github.event.after }}"
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            # First push on this branch, or manual run: sync every course file.
+            FILES=$(git ls-files 'courses/**/*.md')
+          else
+            FILES=$(git diff --name-only "$BEFORE" "$AFTER" -- 'courses/**/*.md')
+          fi
+          echo "files<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$FILES" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Sync to Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CHANGED_FILES: ${{ steps.changed.outputs.files }}
+        run: node scripts/sync-course-modules.js

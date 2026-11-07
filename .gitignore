@@ -172,6 +172,22 @@ Desktop.ini
 *.swp
 *.swo
 
+# Zip archives
+*.zip
+
+# Junk / scratch files
+fix_imports.dart
+rename_widgets.dart
+split_app.dart
+test.dart
+dummy.jpg
+update.ps1
+"et --hard *"
+et?--hard*
+
+# External nested repos (tracked separately)
+watsappcrm/wacrm/
+
 # Node (if any tooling is used)
 node_modules/
 npm-debug.log*
